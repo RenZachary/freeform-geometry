@@ -1,4 +1,4 @@
-# FreeformGeometry
+# Freeform Geometry Fitting
 
 实现多边形，线，点之间的动态拟合变化方法。
 
