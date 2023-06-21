@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <meta name="description" content="动态拟合两个多边形" />
+    <meta name="cesium-sandcastle-labels" content="Showcases,展示" />
+    <title>FreeformGeometry</title>
+    <link rel="stylesheet" href="./libs/ol-v6.15.1-dist/ol.css" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="text/javascript" src="./libs/ol-v6.15.1-dist/ol.js"></script>
+    <script type="text/javascript" src="./libs/Base.js"></script>
+    <script type="text/javascript" src="./libs/DynamicFit.js"></script>
+</head>
+
+<body>
+    <div id="map" class="fullSize"></div>
+    <div class="buttonCainter">
+        <label>总拟合变化次数（每次间隔50毫秒）</label><input type="number" value="300"
+            oninput="if(value<=20)value=20;if(value>=1000)value=1000;value=parseInt(value)" />
+        <br>
+        <button onclick="startFit01()">开始拟合1|多边形(小)→(大)</button>
+        <button onclick="startFit03()">开始拟合4|(点)→(多边形)</button>
+        <button onclick="startFit04()">开始拟合5|(线)→(多边形)</button>
+        <br>
+        <button onclick="startFit06()">开始拟合5|多边形(大)←(小)</button>
+        <button onclick="startFit07()">开始拟合6|(点)←(多边形)</button>
+        <button onclick="startFit08()">开始拟合7|(线)←(多边形)</button>
+        <br>
+        <button onclick="stopFit()">停止拟合</button>
+        <button onclick="pause()">暂停</button>
+        <button onclick="cancelPause()">继续</button>
+    </div>
+    <script type="text/javascript">
+        var baseLayer = new ol.layer.Tile({
+            source: new ol.source.TileArcGISRest({
+                url: 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer',
+                crossOrigin: 'Anonymous'
+            })
+        });
+        var view = new ol.View({
+            center: ol.proj.transform([108, 34], "EPSG:4326", "EPSG:3857"),
+            zoom: 6,
+            projection: 'EPSG:3857',
+        });
+
+        var map = new ol.Map({
+            layers: [baseLayer],
+            target: 'map',
+            view: view
+        });
+
+        function getStepCnt() {
+            const input = document.getElementsByTagName('input')[0];
+            return input.value;
+        }
+
+        const df = new DynamicFit(map, { color: "#cc0000aa" });
+
+        const point = new ol.geom.Point([109.440464697017475, 33.544306402509406]);
+
+        const line = new ol.geom.LineString([[110, 34], [108.5, 33]]);
+
+        const polySmall = new ol.geom.Polygon([[[109.440464697017475, 33.544306402509406], [109.592994120999293, 33.236393915568584], [109.418443525928382, 33.0334152332426], [109.13657253598808, 33.006989827935698], [108.885531185572532, 33.343913745598719], [109.077285565453636, 33.634484730375718], [109.440464697017475, 33.544306402509406]]]);
+
+        const polyBig = new ol.geom.Polygon([[[107.96945046826653, 39.549479758503317], [109.810420371314166, 35.427116530626328], [112.285853057118231, 40.56271013960081], [110.689403626255228, 35.631455230934691], [114.936949000853531, 39.197141021077954], [111.307860005372063, 35.021926982587132], [116.751493498594272, 36.061326257992022], [111.748283427153794, 34.370100318350168], [117.209533857247266, 34.141080139023671], [111.783517300896335, 33.224999421717669], [117.252584619803486, 31.445210056671318], [111.64258180592617, 32.573172757480705], [114.936949000853531, 29.437357994394773], [110.92909586263977, 31.428071860848185], [112.108469787022443, 27.294441536427303], [109.697999555931304, 31.038321046695721], [108.295363800385019, 27.340942506713731], [108.647702537810403, 31.480922671462011], [103.732577150726271, 28.697446645801463], [107.872557315474552, 32.132749335698968], [103.521173908271038, 31.445688797719463], [107.687579478326228, 32.802192936807188], [103.061923012131331, 33.183566103611199], [107.39690001995028, 33.683039780370663], [103.771456092514939, 37.192428007778673], [108.233704521335568, 34.229164823379996], [105.467845432546298, 37.963955440089087], [108.920765059315073, 35.021926982587118], [107.96945046826653, 39.549479758503317]]]);
+
+        function end(e) {
+            console.log("拟合完成");
+        };
+        const startFit01 = function () {
+            df.startPolygon = (polySmall);
+            df.endPolygon = (polyBig);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const startFit03 = function () {
+            df.startPoint = (point);
+            df.endPolygon = (polyBig);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const startFit04 = function () {
+            df.startLine = (line);
+            df.endPolygon = (polyBig);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const startFit06 = function () {
+            df.startPolygon = (polyBig);
+            df.endPolygon = (polySmall);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const startFit07 = function () {
+            df.startPolygon = (polyBig);
+            df.endPoint = (point);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const startFit08 = function () {
+            df.startPolygon = (polyBig);
+            df.endLine = (line);
+            df.stopFit();
+            df.clear();
+            df.fit({ showEnd: true, totalStepCnt: getStepCnt() }, end);
+        };
+        const stopFit = function () {
+            df.stopFit();
+            df.clear();
+        };
+        const cancelPause = function(){
+            df.cancelPause();
+        }
+        const pause = function(){
+            df.pause();
+        }
+    </script>
+</body>
+
+</html>
